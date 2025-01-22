@@ -12,8 +12,6 @@ endif()
 
 set(src_crypto
     md.c
-#    md5.c
-#    memory_buffer_alloc.c
     platform.c
     platform_util.c
     psa_util.c
