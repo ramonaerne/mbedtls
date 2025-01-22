@@ -3346,7 +3346,7 @@
  * This module adds support for SHA-256.
  * This module is required for the SSL/TLS 1.2 PRF function.
  */
-//#define MBEDTLS_SHA256_C
+#define MBEDTLS_SHA256_C
 
 /**
  * \def MBEDTLS_SHA256_USE_ARMV8_A_CRYPTO_IF_PRESENT
