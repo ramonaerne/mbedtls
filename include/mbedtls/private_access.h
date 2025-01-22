@@ -17,4 +17,4 @@
 #define MBEDTLS_PRIVATE(member) member
 #endif
 
-#endif /* MBEDTLS_PRIVATE_ACCESS_H */
+#endif /* MBEDTLS_PRIVATEACCESS_H */

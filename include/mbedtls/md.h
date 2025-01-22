@@ -46,17 +46,7 @@ extern "C" {
  * This is tested by md_to_from_psa() in test_suite_md. */
 typedef enum {
     MBEDTLS_MD_NONE=0,    /**< None. */
-    MBEDTLS_MD_MD5=0x03,       /**< The MD5 message digest. */
-    MBEDTLS_MD_RIPEMD160=0x04, /**< The RIPEMD-160 message digest. */
-    MBEDTLS_MD_SHA1=0x05,      /**< The SHA-1 message digest. */
-    MBEDTLS_MD_SHA224=0x08,    /**< The SHA-224 message digest. */
     MBEDTLS_MD_SHA256=0x09,    /**< The SHA-256 message digest. */
-    MBEDTLS_MD_SHA384=0x0a,    /**< The SHA-384 message digest. */
-    MBEDTLS_MD_SHA512=0x0b,    /**< The SHA-512 message digest. */
-    MBEDTLS_MD_SHA3_224=0x10,  /**< The SHA3-224 message digest. */
-    MBEDTLS_MD_SHA3_256=0x11,  /**< The SHA3-256 message digest. */
-    MBEDTLS_MD_SHA3_384=0x12,  /**< The SHA3-384 message digest. */
-    MBEDTLS_MD_SHA3_512=0x13,  /**< The SHA3-512 message digest. */
 } mbedtls_md_type_t;
 
 /* Note: this should always be >= PSA_HASH_MAX_SIZE
@@ -67,32 +57,10 @@ typedef enum {
  * and legacy, then assume the buffer's size is PSA_HASH_MAX_SIZE in another
  * part of the code based on PSA.
  */
-#if defined(MBEDTLS_MD_CAN_SHA512) || defined(MBEDTLS_MD_CAN_SHA3_512)
-#define MBEDTLS_MD_MAX_SIZE         64  /* longest known is SHA512 */
-#elif defined(MBEDTLS_MD_CAN_SHA384) || defined(MBEDTLS_MD_CAN_SHA3_384)
-#define MBEDTLS_MD_MAX_SIZE         48  /* longest known is SHA384 */
-#elif defined(MBEDTLS_MD_CAN_SHA256) || defined(MBEDTLS_MD_CAN_SHA3_256)
+#if defined(MBEDTLS_MD_CAN_SHA256) || defined(MBEDTLS_MD_CAN_SHA3_256)
 #define MBEDTLS_MD_MAX_SIZE         32  /* longest known is SHA256 */
-#elif defined(MBEDTLS_MD_CAN_SHA224) || defined(MBEDTLS_MD_CAN_SHA3_224)
-#define MBEDTLS_MD_MAX_SIZE         28  /* longest known is SHA224 */
-#else
-#define MBEDTLS_MD_MAX_SIZE         20  /* longest known is SHA1 or RIPE MD-160
-                                           or smaller (MD5 and earlier) */
 #endif
 
-#if defined(MBEDTLS_MD_CAN_SHA3_224)
-#define MBEDTLS_MD_MAX_BLOCK_SIZE         144 /* the longest known is SHA3-224 */
-#elif defined(MBEDTLS_MD_CAN_SHA3_256)
-#define MBEDTLS_MD_MAX_BLOCK_SIZE         136
-#elif defined(MBEDTLS_MD_CAN_SHA512) || defined(MBEDTLS_MD_CAN_SHA384)
-#define MBEDTLS_MD_MAX_BLOCK_SIZE         128
-#elif defined(MBEDTLS_MD_CAN_SHA3_384)
-#define MBEDTLS_MD_MAX_BLOCK_SIZE         104
-#elif defined(MBEDTLS_MD_CAN_SHA3_512)
-#define MBEDTLS_MD_MAX_BLOCK_SIZE         72
-#else
-#define MBEDTLS_MD_MAX_BLOCK_SIZE         64
-#endif
 
 /**
  * Opaque struct.
@@ -122,11 +90,6 @@ typedef enum {
 typedef struct mbedtls_md_context_t {
     /** Information about the associated message digest. */
     const mbedtls_md_info_t *MBEDTLS_PRIVATE(md_info);
-
-#if defined(MBEDTLS_MD_SOME_PSA)
-    /** Are hash operations dispatched to PSA or legacy? */
-    mbedtls_md_engine_t MBEDTLS_PRIVATE(engine);
-#endif
 
     /** The digest-specific context (legacy) or the PSA operation. */
     void *MBEDTLS_PRIVATE(md_ctx);
@@ -336,77 +299,6 @@ int mbedtls_md_finish(mbedtls_md_context_t *ctx, unsigned char *output);
 MBEDTLS_CHECK_RETURN_TYPICAL
 int mbedtls_md(const mbedtls_md_info_t *md_info, const unsigned char *input, size_t ilen,
                unsigned char *output);
-
-/**
- * \brief           This function returns the list of digests supported by the
- *                  generic digest module.
- *
- * \note            The list starts with the strongest available hashes.
- *
- * \return          A statically allocated array of digests. Each element
- *                  in the returned list is an integer belonging to the
- *                  message-digest enumeration #mbedtls_md_type_t.
- *                  The last entry is 0.
- */
-const int *mbedtls_md_list(void);
-
-/**
- * \brief           This function returns the message-digest information
- *                  associated with the given digest name.
- *
- * \param md_name   The name of the digest to search for.
- *
- * \return          The message-digest information associated with \p md_name.
- * \return          NULL if the associated message-digest information is not found.
- */
-const mbedtls_md_info_t *mbedtls_md_info_from_string(const char *md_name);
-
-/**
- * \brief           This function returns the name of the message digest for
- *                  the message-digest information structure given.
- *
- * \param md_info   The information structure of the message-digest algorithm
- *                  to use.
- *
- * \return          The name of the message digest.
- */
-const char *mbedtls_md_get_name(const mbedtls_md_info_t *md_info);
-
-/**
- * \brief           This function returns the message-digest information
- *                  from the given context.
- *
- * \param ctx       The context from which to extract the information.
- *                  This must be initialized (or \c NULL).
- *
- * \return          The message-digest information associated with \p ctx.
- * \return          \c NULL if \p ctx is \c NULL.
- */
-const mbedtls_md_info_t *mbedtls_md_info_from_ctx(
-    const mbedtls_md_context_t *ctx);
-
-#if defined(MBEDTLS_FS_IO)
-/**
- * \brief          This function calculates the message-digest checksum
- *                 result of the contents of the provided file.
- *
- *                 The result is calculated as
- *                 Output = message_digest(file contents).
- *
- * \param md_info  The information structure of the message-digest algorithm
- *                 to use.
- * \param path     The input file name.
- * \param output   The generic message-digest checksum result.
- *
- * \return         \c 0 on success.
- * \return         #MBEDTLS_ERR_MD_FILE_IO_ERROR on an I/O error accessing
- *                 the file pointed by \p path.
- * \return         #MBEDTLS_ERR_MD_BAD_INPUT_DATA if \p md_info was NULL.
- */
-MBEDTLS_CHECK_RETURN_TYPICAL
-int mbedtls_md_file(const mbedtls_md_info_t *md_info, const char *path,
-                    unsigned char *output);
-#endif /* MBEDTLS_FS_IO */
 
 /**
  * \brief           This function sets the HMAC key and prepares to

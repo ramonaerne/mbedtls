@@ -24,21 +24,9 @@ extern "C" {
 #endif
 
 /* Internal helper macros for deprecating API constants. */
-#if !defined(MBEDTLS_DEPRECATED_REMOVED)
-#if defined(MBEDTLS_DEPRECATED_WARNING)
-#define MBEDTLS_DEPRECATED __attribute__((deprecated))
-MBEDTLS_DEPRECATED typedef char const *mbedtls_deprecated_string_constant_t;
-#define MBEDTLS_DEPRECATED_STRING_CONSTANT(VAL)       \
-    ((mbedtls_deprecated_string_constant_t) (VAL))
-MBEDTLS_DEPRECATED typedef int mbedtls_deprecated_numeric_constant_t;
-#define MBEDTLS_DEPRECATED_NUMERIC_CONSTANT(VAL)       \
-    ((mbedtls_deprecated_numeric_constant_t) (VAL))
-#else /* MBEDTLS_DEPRECATED_WARNING */
 #define MBEDTLS_DEPRECATED
 #define MBEDTLS_DEPRECATED_STRING_CONSTANT(VAL) VAL
 #define MBEDTLS_DEPRECATED_NUMERIC_CONSTANT(VAL) VAL
-#endif /* MBEDTLS_DEPRECATED_WARNING */
-#endif /* MBEDTLS_DEPRECATED_REMOVED */
 
 /* Implementation of the check-return facility.
  * See the user documentation in mbedtls_config.h.
@@ -47,15 +35,10 @@ MBEDTLS_DEPRECATED typedef int mbedtls_deprecated_numeric_constant_t;
  * use one of MBEDTLS_CHECK_RETURN_CRITICAL or MBEDTLS_CHECK_RETURN_TYPICAL
  * depending on how important it is to check the return value.
  */
-#if !defined(MBEDTLS_CHECK_RETURN)
 #if defined(__GNUC__)
 #define MBEDTLS_CHECK_RETURN __attribute__((__warn_unused_result__))
-#elif defined(_MSC_VER) && _MSC_VER >= 1700
-#include <sal.h>
-#define MBEDTLS_CHECK_RETURN _Check_return_
 #else
 #define MBEDTLS_CHECK_RETURN
-#endif
 #endif
 
 /** Critical-failure function
@@ -93,11 +76,7 @@ MBEDTLS_DEPRECATED typedef int mbedtls_deprecated_numeric_constant_t;
  *        an error code (as \c int in the \c mbedtls_xxx API or
  *        as ::psa_status_t in the \c psa_xxx API).
  */
-#if defined(MBEDTLS_CHECK_RETURN_WARNING)
-#define MBEDTLS_CHECK_RETURN_TYPICAL MBEDTLS_CHECK_RETURN
-#else
 #define MBEDTLS_CHECK_RETURN_TYPICAL
-#endif
 
 /** Benign-failure function
  *
@@ -158,37 +137,6 @@ MBEDTLS_DEPRECATED typedef int mbedtls_deprecated_numeric_constant_t;
  */
 void mbedtls_platform_zeroize(void *buf, size_t len);
 #endif
-
-#if defined(MBEDTLS_HAVE_TIME_DATE)
-/**
- * \brief      Platform-specific implementation of gmtime_r()
- *
- *             The function is a thread-safe abstraction that behaves
- *             similarly to the gmtime_r() function from Unix/POSIX.
- *
- *             Mbed TLS will try to identify the underlying platform and
- *             make use of an appropriate underlying implementation (e.g.
- *             gmtime_r() for POSIX and gmtime_s() for Windows). If this is
- *             not possible, then gmtime() will be used. In this case, calls
- *             from the library to gmtime() will be guarded by the mutex
- *             mbedtls_threading_gmtime_mutex if MBEDTLS_THREADING_C is
- *             enabled. It is recommended that calls from outside the library
- *             are also guarded by this mutex.
- *
- *             If MBEDTLS_PLATFORM_GMTIME_R_ALT is defined, then Mbed TLS will
- *             unconditionally use the alternative implementation for
- *             mbedtls_platform_gmtime_r() supplied by the user at compile time.
- *
- * \param tt     Pointer to an object containing time (in seconds) since the
- *               epoch to be converted
- * \param tm_buf Pointer to an object where the results will be stored
- *
- * \return      Pointer to an object of type struct tm on success, otherwise
- *              NULL
- */
-struct tm *mbedtls_platform_gmtime_r(const mbedtls_time_t *tt,
-                                     struct tm *tm_buf);
-#endif /* MBEDTLS_HAVE_TIME_DATE */
 
 #ifdef __cplusplus
 }
