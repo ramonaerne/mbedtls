@@ -12,14 +12,8 @@ endif()
 
 set(src_crypto
     md.c
-    platform.c
     platform_util.c
-    psa_util.c
-    ripemd160.c
-    sha1.c
     sha256.c
-    sha512.c
-    sha3.c
 )
 
 if(GEN_FILES)
