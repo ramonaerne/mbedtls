@@ -51,6 +51,7 @@ const unsigned char msg1_part1[] = { 0x01, 0x02 };
 const unsigned char msg1_part2[] = { 0x03, 0x04 };
 const unsigned char msg2_part1[] = { 0x05, 0x05 };
 const unsigned char msg2_part2[] = { 0x06, 0x06 };
+const unsigned char msg3[] = { 0x01, 0x02, 0x03, 0x04 };
 
 /* Dummy key material - never do this in production!
  * This example program uses SHA-256, so a 32-byte key makes sense. */
@@ -115,9 +116,30 @@ static int hmac_demo(void)
     CHK(mbedtls_md_hmac_update(&ctx, msg2_part2, sizeof(msg2_part2)));
     CHK(mbedtls_md_hmac_finish(&ctx, out));
     print_buf("msg2", out, mbedtls_md_get_size(info));
-
 exit:
     mbedtls_md_free(&ctx);
+    mbedtls_platform_zeroize(out, sizeof(out));
+
+    return ret;
+}
+
+/*
+ * This function demonstrates computation of the HMAC of two messages using
+ * the multipart API.
+ */
+static int hmac_demo_one(void)
+{
+    int ret;
+    const mbedtls_md_type_t alg = MBEDTLS_MD_SHA256;
+    unsigned char out[MBEDTLS_MD_MAX_SIZE]; // safe but not optimal
+
+    /* prepare context and load key */
+    // the last argument to setup is 1 to enable HMAC (not just hashing)
+    const mbedtls_md_info_t *info = mbedtls_md_info_from_type(alg);
+    CHK(mbedtls_md_hmac(info, key_bytes, sizeof(key_bytes), msg3, sizeof(msg3), out));
+    print_buf("msg3", out, mbedtls_md_get_size(info));
+
+exit:
     mbedtls_platform_zeroize(out, sizeof(out));
 
     return ret;
@@ -128,6 +150,7 @@ int main(void)
     int ret;
 
     CHK(hmac_demo());
+    CHK(hmac_demo_one());
 
 exit:
     return ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
